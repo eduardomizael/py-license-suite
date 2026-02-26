@@ -4,7 +4,7 @@ import subprocess
 import sys
 from .project_manager import get_project_keys
 
-def build_project(project_name: str, target_dir: str, entrypoint: str = "main.py"):
+def build_project(project_name: str, target_dir: str, entrypoint: str = "main.py", build_exe: bool = False):
     """
     Pega os arquivos do diretório de templates e envia pro projeto alvo:
     - Lê a Public Key vinculada ao `project_name`
@@ -137,15 +137,44 @@ atexit.register(update_system_clock)
         # Verifica tipagem do projeto
         if os.path.exists(os.path.join(target_dir, 'uv.lock')) or os.path.exists(os.path.join(target_dir, 'pyproject.toml')):
             print("  -> Detectado projeto gerenciado pelo uv/pyproject. Instalando 'cryptography' via uv...")
-            # uv add cria o sync default, shell=True ajuda nativamente a pegar o alias de bin/uv do Windows
             subprocess.run(["uv", "add", "cryptography"], cwd=target_dir, check=True, capture_output=True, shell=True)
+            
+            if build_exe:
+                print("  -> Instalando 'pyinstaller' via uv...")
+                subprocess.run(["uv", "add", "pyinstaller"], cwd=target_dir, check=True, capture_output=True, shell=True)
         else:
             print("  -> Utilizando pip nativo do ambiente para instalar 'cryptography'...")
             subprocess.run([sys.executable, "-m", "pip", "install", "cryptography"], cwd=target_dir, check=True, capture_output=True)
-        print("  -> Dependência 'cryptography' garantida no cliente.")
+            
+            if build_exe:
+                print("  -> Instalando 'pyinstaller' via pip...")
+                subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], cwd=target_dir, check=True, capture_output=True)
+                
+        print("  -> Dependências base garantidas no cliente.")
     except Exception as e:
         print(f"[AVISO] Não foi possível instalar a dependência automaticamente.")
-        print("  -> Instale manualmente no terminal do cliente: pip install cryptography")
+        print(f"  -> Instale manualmente no cliente: pip install cryptography {'pyinstaller' if build_exe else ''}")
 
-    print("[SUCESSO] Build Automático finalizado! O cliente está protegido e pronto para gerar as licenças.")
+    # Processo de empacotamento em Executável (PyInstaller)
+    if build_exe:
+        print(f"\n[5/5] Compilando executável standalone com PyInstaller...")
+        try:
+            # Comando PyInstaller
+            # Adiciona o hide-console (para Windows, opcional, mas comum) e onefile
+            py_cmd = ["python", "-m", "PyInstaller", "--onefile", entrypoint]
+            
+            # Executa usando o ambiente onde possivelmente está instalado (assumindo que seja o do uv ou global)
+            # Se for UV, a forma segura de rodar um módulo recém instalado é "uv run pyinstaller"
+            if os.path.exists(os.path.join(target_dir, 'uv.lock')) or os.path.exists(os.path.join(target_dir, 'pyproject.toml')):
+                py_cmd = ["uv", "run", "pyinstaller", "--onefile", entrypoint]
+                
+            print(f"  -> Executando: {' '.join(py_cmd)}")
+            subprocess.run(py_cmd, cwd=target_dir, check=True, capture_output=False, shell=(py_cmd[0] == "uv"))
+            
+            print(f"  -> [SUCESSO] Aplicativo compilado com sucesso! O binário está na pasta raiz '{os.path.join(target_dir, 'dist')}'")
+        except Exception as e:
+            print(f"  -> [ERRO] Ocorreu uma falha no build do executável via PyInstaller: {e}")
+            print(f"     A injeção do código foi feita, então você pode tentar compilar manualmente depois.")
+
+    print(f"\n[SUCESSO] Build Automático finalizado! O cliente ('{entrypoint}') está protegido e pronto para gerar as licenças.")
     return True

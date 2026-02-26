@@ -26,6 +26,7 @@ def main():
     parser_build.add_argument('--project', required=True, help='Nome do Projeto da Suíte')
     parser_build.add_argument('--target', required=True, help='Caminho/Output diretorio do projeto do Cliente onde o modulo deve entrar')
     parser_build.add_argument('--entrypoint', default='main.py', help='Arquivo principal do projeto do cliente para injetar a validação')
+    parser_build.add_argument('--build-exe', action='store_true', help='Se definido, compila o projeto cliente para um executável (.exe) usando PyInstaller')
 
     args = parser.parse_args()
     
@@ -76,7 +77,7 @@ def main():
     elif args.command == 'build':
         from core.builder import build_project
         print(f"Iniciando Build do Py-License para o projeto '{args.project}'...")
-        build_project(args.project, args.target, args.entrypoint)
+        build_project(args.project, args.target, args.entrypoint, args.build_exe)
         
     else:
         parser.print_help()
