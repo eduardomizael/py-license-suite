@@ -25,6 +25,7 @@ def main():
     parser_build = subparsers.add_parser('build', help='Injeta e ofusca o módulo do cliente para um diretório alvo')
     parser_build.add_argument('--project', required=True, help='Nome do Projeto da Suíte')
     parser_build.add_argument('--target', required=True, help='Caminho/Output diretorio do projeto do Cliente onde o modulo deve entrar')
+    parser_build.add_argument('--entrypoint', default='main.py', help='Arquivo principal do projeto do cliente para injetar a validação')
 
     args = parser.parse_args()
     
@@ -75,7 +76,7 @@ def main():
     elif args.command == 'build':
         from core.builder import build_project
         print(f"Iniciando Build do Py-License para o projeto '{args.project}'...")
-        build_project(args.project, args.target)
+        build_project(args.project, args.target, args.entrypoint)
         
     else:
         parser.print_help()

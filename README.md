@@ -41,24 +41,13 @@ uv run cli.py init --name SeuSoftware
 
 ### 2. Injetando a Licença no "SeuSoftware"
 
-Basta invocar o builder mandando entregar as chaves públicas injetadas em cópias dos templates na pasta do seu código base (por ex. `C:\dev\meu-sistema-app\license_check`). Ele irá usar o PyArmor para ofuscar (criptografar) essas rotinas client-side num bloco preto, entregando pro seu projeto final.
+Basta invocar o builder mandando entregar as chaves públicas injetadas apontando o caminho da **raiz** do projeto cliente. Ele irá usar o PyArmor para ofuscar o validador. Além de proteger o código, **o próprio comando da Suíte vai injetar a trava no seu script inicial e instalar a biblioteca necessária (`cryptography`) nativamente lá**.
 
 ```bash
-uv run cli.py build --project SeuSoftware --target "C:\\dev\\meu-sistema-app\\license_check"
+uv run cli.py build --project SeuSoftware --target "C:\\dev\\meu-sistema-app" --entrypoint "app.py"
 ```
 
-Dentro do arquivo inicial do projeto final (`main.py` de preferência), você vai apenas referenciar o pacote `license_check` que acabamos de mandar e instanciar:
-
-```python
-from license_check.security import check_startup_licensing
-from license_check.anti_tampering import update_system_clock
-import atexit
-
-# Mata a exe no processo sys.exit(1) caso hardware ID, expiração ou fraudes baterem.
-check_startup_licensing()
-# Mantem a vida da proteção anti-fraude checada a cada uso
-atexit.register(update_system_clock)
-```
+*Observação: A flag `--entrypoint` é opcional. Se não informada, o robô irá tentar modificar automaticamente um arquivo chamado `main.py`.*
 
 ### 3. Gerando uma Licença válida (`.lic`)
 
