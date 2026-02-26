@@ -43,8 +43,10 @@ uv run cli.py init --name SeuSoftware
 
 Basta invocar o builder mandando entregar as chaves públicas injetadas apontando o caminho da **raiz** do projeto cliente. Ele irá usar o PyArmor para ofuscar o validador. Além de proteger o código, **o próprio comando da Suíte vai injetar a trava no seu script inicial e instalar a biblioteca necessária (`cryptography`) nativamente lá**.
 
+Se você quiser segurança extrema (para que ninguém delete as injeções alterando seu código-fonte `app.py` original em bloco de notas), você pode solicitar que a ferramenta gere um `Executável Autônomo (.exe)` que blinda o arquivo de entrada da sua aplicação inteiramente usando o PyInstaller.
+
 ```bash
-uv run cli.py build --project SeuSoftware --target "C:\\dev\\meu-sistema-app" --entrypoint "app.py"
+uv run cli.py build --project SeuSoftware --target "C:\\dev\\meu-sistema-app" --entrypoint "app.py" --build-exe
 ```
 
 *Observação: A flag `--entrypoint` é opcional. Se não informada, o robô irá tentar modificar automaticamente um arquivo chamado `main.py`.*
