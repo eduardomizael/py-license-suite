@@ -1,0 +1,11 @@
+[project]
+name = "py-license-suite"
+version = "0.1.0"
+description = "Suíte open-source para geração e validação de licenças offline em Python, ofuscadas via PyArmor."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography>=46.0.5",
+    "pyarmor>=9.2.3",
+    "pyyaml>=6.0.3",
+]

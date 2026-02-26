@@ -1,0 +1,26 @@
+# Ambiente Virtual Python
+venv/
+env/
+.env/
+.env
+
+# Cache e compilações Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configurações Locais
+config.local.yaml
+config.local.json
+
+# Dados e Chaves
+projects_data/
+*.pem
+*.lic
+output/
+dist/
+build/
+*.spec
+
+# PyArmor Cache
+.pyarmor/

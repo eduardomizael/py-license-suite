@@ -1,0 +1,104 @@
+import os
+import shutil
+import subprocess
+import sys
+from .project_manager import get_project_keys
+
+def build_project(project_name: str, target_dir: str):
+    """
+    Pega os arquivos do diretório de templates e envia pro projeto alvo:
+    - Lê a Public Key vinculada ao `project_name`
+    - Substitui no `security.py`
+    - (WIP) Compila os templates pra gerar bytecode / pyarmor
+    - Copia os resultantes para o diretório de modulos do cliente (`target_dir`)
+    """
+    if not os.path.exists(target_dir):
+        print(f"[ERRO BUILDER] O diratório de destino '{target_dir}' não existe!")
+        return False
+        
+    try:
+        _, public_key_pem = get_project_keys(project_name)
+    except ValueError as e:
+        print(f"[ERRO BUILDER] {e}")
+        return False
+        
+    # Diretório base
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    templates_dir = os.path.join(base_dir, 'templates')
+    
+    # Cria pasta temporária para empacotamento
+    temp_build_dir = os.path.join(base_dir, 'build', f"{project_name}_tmp")
+    if os.path.exists(temp_build_dir):
+        shutil.rmtree(temp_build_dir)
+    os.makedirs(temp_build_dir, exist_ok=True)
+    
+    print("[1/3] Preparando Módulos Templates e Injetando Chave RSA...")
+    files_to_copy = ['__init__.py', 'hardware.py', 'anti_tampering.py', 'security.py']
+    
+    # Criar um `__init__.py` vazio no templates para o build se n tiver
+    init_path = os.path.join(templates_dir, '__init__.py')
+    if not os.path.exists(init_path):
+        open(init_path, 'w').close()
+        
+    for fname in files_to_copy:
+        src = os.path.join(templates_dir, fname)
+        if not os.path.exists(src):
+            continue
+            
+        dst = os.path.join(temp_build_dir, fname)
+        with open(src, 'r', encoding='utf-8') as fs:
+            content = fs.read()
+            
+        # Injeção real da chave para o cliente não precisar tocar nisso
+        if fname == 'security.py':
+            content = content.replace('"""{{PUBLIC_KEY_PLACEHOLDER}}"""', f'"""\\n{public_key_pem.decode("utf-8")}\\n"""')
+            
+        with open(dst, 'w', encoding='utf-8') as fd:
+            fd.write(content)
+
+    print(f"[2/3] Ofuscando com PyArmor no diretorio {temp_build_dir}...")
+    # Tenta usar a interface CLI do pyarmor instalada
+    obfuscated_output = os.path.join(temp_build_dir, '.pyarmor_build')
+    
+    try:
+        # Comando Pyarmor padrão na versao 8 via módulo pacote
+        cmd = [
+            "pyarmor", "gen",
+            "-O", obfuscated_output,
+            temp_build_dir
+        ]
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        print("[OK] Pyarmor finalizou com sucesso!")
+    except subprocess.CalledProcessError as e:
+        print("[ERRO PYARMOR] Ocorreu uma falha na ofuscação:")
+        print(e.stderr)
+        return False
+    except FileNotFoundError:
+         print("[ERRO] O PyArmor não foi encontrado no PATH. Foi instalado corretamente? (pip install pyarmor)")
+         return False
+
+    print(f"[3/3] Movendo arquivos ofuscados para o projeto cliente em: {target_dir} -> license_check")
+    # A pasta resultante do Pyarmor no `-O` contém os .py obfuscos
+    final_dest = os.path.join(target_dir, 'license_check')
+    if os.path.exists(final_dest):
+        shutil.rmtree(final_dest)
+        
+    shutil.copytree(os.path.join(obfuscated_output, f"{project_name}_tmp"), final_dest)
+    
+    # Copia a runtime engine do pyarmor lado a lado nos modulos locais
+    for item in os.listdir(obfuscated_output):
+        if item.startswith('pyarmor_runtime_'):
+            shutil.copytree(
+                os.path.join(obfuscated_output, item), 
+                os.path.join(final_dest, item)
+            )
+    print("[SUCESSO] Build finalizado! Adicione o import no topo do main.py cliente:")
+    print("from license_check.security import check_startup_licensing")
+    print("from license_check.anti_tampering import update_system_clock")
+    return True

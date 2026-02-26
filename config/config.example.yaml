@@ -1,0 +1,14 @@
+# Py-License-Suite Configuration Example
+# Renomeie este arquivo para `config.local.yaml` (será ignorado pelo git)
+# ou crie um arquivo com a sua configuração
+
+# Caminho para o diretório de dados dos projetos e chaves RSA
+# Padrão: usa a pasta projects_data/ no root do projeto.
+data_path: "projects_data"
+
+# Configurações Globais do PyArmor
+pyarmor:
+  # Versão usada do PyArmor (Pode se comportar de forma diferente em versões >= 8 versus versão 7)
+  version: "8"
+  # Flags extras padrão que deverão rodar junto com a ofuscação (ex: --enable-bcc)
+  extra_obfuscation_flags: []
