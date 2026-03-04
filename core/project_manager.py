@@ -19,6 +19,9 @@ def save_projects(data: dict):
     with open(index_path, 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4)
 
+from datetime import datetime
+import shutil
+
 def create_project(project_name: str) -> bool:
     """Retorna True se criou com sucesso, False se ja existir."""
     projects = load_projects()
@@ -40,10 +43,28 @@ def create_project(project_name: str) -> bool:
     projects[project_name] = {
         "private_key_path": priv_path,
         "public_key_path": pub_path,
-        "created_at": "NOW" # TODO: formatar dt
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     
     save_projects(projects)
+    return True
+
+def delete_project(project_name: str) -> bool:
+    """Remove o projeto do registro json e deleta a pasta dele de forma irreversível. Retorna True se sucesso."""
+    projects = load_projects()
+    if project_name not in projects:
+        return False
+        
+    # Remove pasta física
+    data_dir = get_data_dir()
+    project_dir = os.path.join(data_dir, project_name)
+    if os.path.exists(project_dir):
+        shutil.rmtree(project_dir)
+        
+    # Remove do índice JSON
+    del projects[project_name]
+    save_projects(projects)
+    
     return True
 
 def get_project_keys(project_name: str) -> tuple[bytes, bytes]:

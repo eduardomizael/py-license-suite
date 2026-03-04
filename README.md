@@ -27,7 +27,24 @@ uv sync   # Vai instalar cryptography, pyarmor, pyyaml...
 
 ---
 
-## 🛠 Como Funciona (Workflow Básico)
+## 🖥️ Uso via Interface Gráfica (GUI)
+
+O projeto possui uma interface visual desenvolvida em Tkinter para facilitar todas as operações de licenciamento sem a necessidade de comandos em terminal.
+Para abrir a interface, execute na raiz do projeto:
+
+```bash
+uv run python gui.py
+```
+
+A partir da janela do aplicativo, você poderá navegar por três abas intuitivas:
+
+- **Projetos**: Aba dedicada ao gerenciamento. Permite criar novos registros de chaves (`init`) assim como visualizar e excluir projetos existentes de forma visual.
+- **Gerar Licença**: Aba para a emissão de licenças (substitui o `keygen`). Basta selecionar o seu projeto num menu suspenso, colar o HWID recebido do cliente e escolher a data de expiração.
+- **Build Cliente**: Permite injetar a proteção apontando visualmente o arquivo de entrada do cliente (via `Procurar...`). Possui suporte à compilação com [PyInstaller] mantendo o rastreio visual do que está acontecendo sem congelar a tela.
+
+---
+
+## 🛠 Como Funciona (Workflow Básico CLI)
 
 O pacote dispões do entrypoint central: `cli.py`.
 
